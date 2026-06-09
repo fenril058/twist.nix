@@ -8,7 +8,7 @@
   inventories ? null,
   registries ?
     if inventories == null
-    then builtins.abort "emacsTwist: registries is a required argument"
+    then builtins.throw "emacsTwist: registries is a required argument"
     else lib.warn "emacsTwist: inventories is deprecated. Use registries instead." inventories,
   initFiles,
   initParser ? lib.parseUsePackages {},
