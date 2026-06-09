@@ -141,6 +141,7 @@ in
         enable = mkOption {
           type = types.bool;
           description = "Whether to install emacsclient";
+          default = false;
         };
       };
 
