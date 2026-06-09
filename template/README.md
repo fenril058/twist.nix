@@ -23,14 +23,22 @@ A starting point for building an Emacs configuration with
 2. Edit `init.el` and add a `use-package` form (with `:ensure t`) for each
    package you want.
 
-3. Generate the lock files. This writes `lock/flake.nix` and `lock/archive.lock`
-   and then runs `nix flake lock` for you:
+3. Make the project a Git repository. The lock command stages the generated
+   files with `git add`, so it must run inside a Git work tree:
 
    ```sh
-   nix run .#lock
+   git init && git add .
    ```
 
-4. Build the configuration:
+4. Generate the lock files. This writes `lock/flake.nix` and `lock/archive.lock`
+   and then runs `nix flake lock` for you. The `archive-contents` registry is
+   fetched over the network, so the first run needs `--impure`:
+
+   ```sh
+   nix run .#lock --impure
+   ```
+
+5. Build the configuration:
 
    ```sh
    nix build .#emacs
@@ -39,12 +47,21 @@ A starting point for building an Emacs configuration with
 
 ## Updating packages
 
-Refresh the package archives and regenerate the lock files:
+Refresh the ELPA archive snapshot (`archive.lock`) and regenerate the lock
+files:
 
 ```sh
-nix run .#update
+nix run .#update --impure
 nix run .#lock
 ```
+
+To update packages built from Git sources, bump their pinned revisions in
+`lock/flake.lock`:
+
+```sh
+nix flake update --flake ./lock
+```
+
 
 ## Home Manager
 
