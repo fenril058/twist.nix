@@ -104,7 +104,7 @@ with builtins; let
         else xs)
     ];
 
-  succeeding = s: isNotHeader s && s != "";
+  succeeding = s: isNotHeader s && match ";+[[:space:]]*([^[:space:];].*)" s != null;
 
   splitKeywords = s:
     if s == ""
