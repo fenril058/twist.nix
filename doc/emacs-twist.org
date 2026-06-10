@@ -276,6 +276,9 @@ The =twist.lib.makeEnv= function accepts the following arguments:
 | =defaultMainIsAscii= | bool | =false= | Assume all package main files are ASCII (required for some IFD avoidance) |
 | =exportManifest= | bool | =false= | Export a manifest file from the wrapper (needed for twist.el hot-reload) |
 | =nativeCompileAheadDefault= | bool | =true= | Ahead-of-time native compilation for all packages |
+| =wantExtraOutputs= | bool | =true= | Build extra outputs of packages, e.g. Info manuals |
+| =extraOutputsToInstall= | list | =["info"]= if =wantExtraOutputs= | Extra derivation outputs installed into the environment |
+| =postCommandOnGeneratingLockDir= | string | =null= | Command run at the repository root after =generateLockDir= |
 | =addSystemPackages= | bool | =true= | Feed =:system-packages= declarations from init files into =exec-path= |
 | =inputOverrides= | attrset | ={}= | Per-package source overrides |
 | =configurationRevision= | string | =null= | Revision string embedded in the wrapper |
@@ -336,6 +339,9 @@ The following values of =type= are supported:
 - =elpa= — the =elpa-packages= file of [[https://git.savannah.gnu.org/cgit/emacs/elpa.git/][GNU ELPA]] or [[https://git.savannah.gnu.org/cgit/emacs/nongnu.git/][NonGNU ELPA]].
 - =archive-contents= — a pre-built package archive as supported by =package.el= (e.g. an =archive-contents= file).  This is an /impure/ registry; see below.
 - =gitmodules= — the =.gitmodules= list of [[https://github.com/emacsmirror/epkgs][emacsmirror/epkgs]].
+
+A fifth type, =archive=, also exists but is on track to be removed upstream and should not be used in new configurations.
+
 
 /Impure/ registries (=archive-contents=) require Nix to make a network connection.
 The user must pass =--impure= when running the lock operation.
