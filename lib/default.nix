@@ -27,9 +27,12 @@ in
 
   emacsBuiltinLibraries =
     {
+      stdenv,
+      ripgrep,
+      emacs,
       lib,
-    }@args:
-    lib.pipe (readFile (import ../pkgs/emacs/builtins.nix args)) [
+    }:
+    lib.pipe (readFile (import ../pkgs/emacs/builtins.nix {inherit stdenv ripgrep emacs;})) [
       (split "\n")
       (filter (s: isString s && s != ""))
     ];
