@@ -14,7 +14,7 @@
 @finalout
 @titlepage
 @title Emacs Twist User Documentation
-@author default
+@author omen2026
 @end titlepage
 
 @contents
@@ -26,9 +26,1121 @@
 
 @menu
 * Introduction::
+* System requirements::
+* Installation::
+* Initial configuration of a project::
+* How to run the configuration::
+* Developing the configuration::
+* Troubleshooting::
+* Tips::
+* Limitations::
+
+@detailmenu
+--- The Detailed Node Listing ---
+
+Introduction
+
+* Building with Nix::
+* Lock individual packages::
+* Support various package repositories::
+* Pure builds vs. impure builds: Pure builds vs impure builds. 
+* Build subset profiles with minimal extra time::
+* nix eval-friendly APIs::
+* Creating a self-contained environment with required executables::
+* Almost no runtime::
+
+Installation
+
+* Turn on Nix flakes::
+* Add an access token to GitHub::
+
+Initial configuration of a project
+
+* Initializing from a template::
+* Manual creation of a project boilerplate::
+* makeEnv options::
+* Registry Configuration::
+* Customization::
+
+Manual creation of a project boilerplate
+
+* Create flake.nix: Create flakenix. 
+* Add flake inputs::
+* Create a lock directory::
+* Define flake outputs::
+
+Registry Configuration
+
+* Supported registries::
+* MELPA (pure)::
+* ELPA (pure)::
+* Emacsmirror (pure)::
+* Package archives (impure)::
+* Registry entry fields::
+
+Customization
+
+* Org-babel configuration::
+* Using a non-stable version of GNU Emacs::
+* Using a configuration syntax other than use-package::
+
+How to run the configuration
+
+* Installation with home-manager::
+* Normal installation (without home-manager)::
+* Bubblewrap::
+
+Developing the configuration
+
+* Basic workflow::
+* Working around sources::
+* Custom build processes::
+* Checking the versions of packages::
+
+Troubleshooting
+
+* Package not found after editing init.el: Package not found after editing initel. 
+* Rate-limited by GitHub::
+* Build failure on a specific package::
+
+Tips
+
+* --dry-run is your friend::
+* Prefer building from sources::
+* Inspecting the package set::
+
+Limitations
+
+* use-package-always-ensure option::
+* Emacs Lisp packages that cannot be built with Twist::
+
+@end detailmenu
 @end menu
 
 @node Introduction
 @chapter Introduction
+
+@menu
+* Building with Nix::
+* Lock individual packages::
+* Support various package repositories::
+* Pure builds vs. impure builds: Pure builds vs impure builds. 
+* Build subset profiles with minimal extra time::
+* nix eval-friendly APIs::
+* Creating a self-contained environment with required executables::
+* Almost no runtime::
+@end menu
+
+@node Building with Nix
+@section Building with Nix
+
+Twist builds packages with the @uref{https://nixos.org/, Nix} package manager, a purely functional package manager for Linux and macOS@.
+Rather than running a build process inside a running session of Emacs, it builds packages in a sandboxed Nix session.
+This ensures that your entire configuration is reproducible.
+
+Twist avoids systems programming in Emacs Lisp, which is hard to get right.
+Nix handles most of the heavy lifting in package management, which makes the build process reliable and performant.
+
+@node Lock individual packages
+@section Lock individual packages
+
+Twist lets you lock individual package versions.
+This is different from @samp{emacsWithPackages} in Nixpkgs, which basically updates all packages to the latest version at once.
+In Twist, you can select which packages to update, and the remaining packages won't be updated, even if their upstream repositories have newer revisions.
+This is a recommended practice for security.
+
+The format of a lock file is @samp{flake.nix} + @samp{flake.lock}, so you can use Nix to update packages.
+You don't need a separate command for maintenance.
+
+@node Support various package repositories
+@section Support various package repositories
+
+Twist can build most Emacs Lisp packages available from Git repositories.
+It is capable of building quite a few packages on GNU/NonGNU ELPA and MELPA from sources.
+Some packages from GNU ELPA cannot be built from sources, but Twist can also take advantage of pre-built package archives and Emacsmirror.
+
+For Core ELPA packages, it can build them from a specific revision of the source repository of GNU Emacs.
+
+With Twist, it is also easy to add packages from the wild.
+Perhaps this is the biggest advantage of Twist over @samp{emacsWithPackages}.
+Rather than writing a Nix expression (with a revision hash and checksum) for every package you want to add, you can simply create a MELPA recipe and run a lock command.
+Those custom packages are tracked in @samp{flake.lock}, so it is also easy to update them.
+
+@node Pure builds vs impure builds
+@section Pure builds vs. impure builds
+
+With Twist, there is a clear distinction between pure and impure builds of configuration.
+If there is any package that is not tracked in the lock file, building the configuration will be impure.
+Otherwise, all packages are locked, and the build is pure.
+Impure build requires @samp{--impure} flag of Nix.
+It still allows impure builds, for ease of development, but you will know whether your configuration will be reproducible on other machines.
+
+@node Build subset profiles with minimal extra time
+@section Build subset profiles with minimal extra time
+
+Typical package managers for Emacs store packages in @samp{user-emacs-directory}.
+If the user has multiple configuration profiles using a tool like @uref{https://github.com/plexus/chemacs2, chemacs2}, the installation time will be approximately proportional to the number of profiles.
+
+On the contrary, Twist is based on Nix, so it stores all sources and artifacts in the centralized Nix store.
+If the user has multiple configuration profiles with the same revision set of packages, it requires almost no extra time for installing multiple profiles.
+The total time will be almost the same as the build time for their master profile.
+This saves your time, if you have such use cases.
+
+@uref{https://github.com/emacs-twist/org-babel, org-babel} library for Nix allows you to define subprofiles from a single Org file according to tags.
+
+@node nix eval-friendly APIs
+@section nix eval-friendly APIs
+
+Twist exposes an API that is accessible via @samp{nix eval} command.
+You can inspect metadata of a specific package or all packages without running the configuration.
+This shouldn't be necessary, but it helps troubleshooting once the build process fails.
+It is also possible to export an entire package set to JSON, which can be used to script around your configuration.
+
+@node Creating a self-contained environment with required executables
+@section Creating a self-contained environment with required executables
+
+Twist provides an option for feeding packages from Nixpkgs to @samp{exec-path} of Emacs.
+This is equivalent to @samp{use-package-ensure-system-package}, but it doesn't rely on imperative usage of a package manager.
+
+@node Almost no runtime
+@section Almost no runtime
+
+Twist builds packages outside of a live Emacs session, and it requires no runtime, except for loading pre-generated autoloads.
+The startup time of Twist-based Emacs is as fast as that of @samp{package.el}, or maybe even slightly faster.
+
+@node System requirements
+@chapter System requirements
+
+Twist depends on the Nix package manager.
+Nix is currently supported on Linux and macOS@.
+For details, refer to the manual of Nix: @uref{https://nixos.org/manual/nix/stable/installation/supported-platforms.html}
+
+Also, the Nix package manager on your system must be version 2.4 or later.
+To check the version of Nix, run the following command on terminal:
+
+@example
+nix --version
+@end example
+
+The command should print an output as follows:
+
+@example
+nix (Nix) 2.8.0pre20220411_f7276bc
+@end example
+
+If you don't have Nix, you can download it from here: @uref{https://nixos.org/download.html}
+
+@node Installation
+@chapter Installation
+
+Before you use Twist on your machine, you may need an additional configuration.
+
+@menu
+* Turn on Nix flakes::
+* Add an access token to GitHub::
+@end menu
+
+@node Turn on Nix flakes
+@section Turn on Nix flakes
+
+Twist is designed for use in a Nix flake.
+Flakes are an experimental feature of Nix, and may be turned off by default depending on your Nix version.
+
+To turn on the feature, follow the instruction in the following article: @uref{https://nixos.wiki/wiki/Flakes#Installing_flakes}
+
+@node Add an access token to GitHub
+@section Add an access token to GitHub
+
+Twist is a source-based build machinery.
+It fetches package sources from upstream repositories with Nix.
+As most Emacs Lisp packages are hosted on @uref{https://github.com/, GitHub} nowadays, and GitHub imposes a rather strict rate limit (60 per hour) on API access, you are likely to be blocked from @samp{api.github.com} when you use Twist.
+
+To mitigate this issue, you can expand the rate limit by using authorized access to GitHub.
+This will increase the rate limit to 5000 per hour, which is sufficient for normal use.
+
+To enable authorized access to GitHub, you have to generate an access token on GitHub and add it to your @samp{nix.conf}.
+You need a GitHub account.
+
+@enumerate
+@item
+Log in to your GitHub account, go to @uref{https://github.com/settings/apps, Developer Settings}, and visit @emph{Personal access tokens}.
+@item
+Press @emph{Generate new token} button.
+@item
+Set a note and expiration. Select @samp{repo:status} and @samp{public_repo}, and press @emph{Generate token} button.
+@item
+Copy the token and add it to your @samp{nix.conf}.
+@end enumerate
+
+When you finish these steps, your @samp{nix.conf} should contain a line as follows:
+
+@example
+access-tokens = github.com=XXXXXX
+@end example
+
+For details on rate limiting on GitHub, refer to the following section in the GitHub Docs:
+@uref{https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting}
+
+For details on scopes, refer to the following article in the GitHub Docs: @uref{https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps}
+
+@node Initial configuration of a project
+@chapter Initial configuration of a project
+
+@menu
+* Initializing from a template::
+* Manual creation of a project boilerplate::
+* makeEnv options::
+* Registry Configuration::
+* Customization::
+@end menu
+
+@node Initializing from a template
+@section Initializing from a template
+
+To create a new configuration from scratch, you can use a template.
+First, create an empty directory.
+Then, run the following command in the directory:
+
+@example
+nix flake init -t github:emacs-twist/twist.nix
+@end example
+
+The template creates the following files:
+
+@itemize
+@item
+@samp{flake.nix} — the Nix flake with all inputs (nixpkgs, twist, MELPA, GNU ELPA, NonGNU ELPA, Emacsmirror) and the call to @samp{twist.lib.makeEnv}.
+@item
+@samp{init.el} — a starter init file using @samp{use-package}.  Add @samp{use-package} blocks with @samp{:ensure t} here.
+@item
+@samp{early-init.el} — sets @samp{package-enable-at-startup} to @samp{nil} so that @samp{package.el} does not run at startup.
+@item
+@samp{lock/} — an empty lock directory (contains @samp{.gitkeep}) where Twist will write @samp{flake.nix}, @samp{flake.lock}, and @samp{archive.lock}.
+@item
+@samp{README.md} — quick-start instructions.
+@end itemize
+
+Now you can work on your configuration by adding @samp{use-package} blocks to @samp{init.el}.
+
+Twist also provides some extra flexibility on configuration:
+
+@itemize
+@item
+Manage your configuration in an Org file
+@item
+Use an alternative utility other than @samp{use-package}, like @samp{setup.el}
+@end itemize
+
+Otherwise, you can skip the following subsections to start developing your configuration.
+
+@node Manual creation of a project boilerplate
+@section Manual creation of a project boilerplate
+
+Alternatively, if you already have an Emacs configuration built with Nix, you can migrate your configuration to Twist by tweaking your configuration.
+
+This subsection assumes you have a flake for your Emacs configuration.
+
+@menu
+* Create flake.nix: Create flakenix. 
+* Add flake inputs::
+* Create a lock directory::
+* Define flake outputs::
+@end menu
+
+@node Create flakenix
+@subsection Create flake.nix
+
+You must track your configuration in a Git repository, and the root directory of the repository must contain @samp{flake.nix}.
+It must follow the format of @uref{https://nixos.wiki/wiki/Flakes, Nix flakes} as recognized by Nix.
+You can run the following command to create a @samp{flake.nix}:
+
+@example
+nix flake init
+@end example
+
+@node Add flake inputs
+@subsection Add flake inputs
+
+To use Twist, you have to add @samp{github:emacs-twist/twist.nix} to the inputs:
+
+@example
+inputs.twist.url = "github:emacs-twist/twist.nix";
+@end example
+
+You will also need to add flake inputs for the registries you use.
+See @ref{Registry Configuration} for details.
+
+@node Create a lock directory
+@subsection Create a lock directory
+
+You have to create a directory for lock files.
+The directory can be anywhere inside the repository, but not the root directory of the repository.
+
+For example, if the directory is named @samp{lock}, you can use the following commands:
+
+@example
+mkdir -p lock
+touch lock/.gitkeep
+git add lock/.gitkeep
+@end example
+
+Note that the directory must not be empty.
+It must be considered non-empty by Nix, so you have to create an empty file (e.g. @samp{.gitkeep}) in the directory and add it to the Git index.
+
+@node Define flake outputs
+@subsection Define flake outputs
+
+A typical @samp{flake.nix} looks like the following.
+It uses @samp{nixpkgs.lib.genAttrs} together with the @samp{nix-systems/default} helper to support multiple systems:
+
+@example
+@{
+  inputs = @{
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default";
+    twist.url = "github:emacs-twist/twist.nix";
+    # ... registry inputs (melpa, gnu-elpa, etc.) ...
+  @};
+
+  outputs = @{ nixpkgs, systems, twist, ... @} @@ inputs:
+    let
+      eachSystem = f:
+        nixpkgs.lib.genAttrs (import systems)
+          (system: f (import nixpkgs @{ inherit system; @}));
+
+      inherit (twist.lib) makeEnv;
+
+      emacsConfig = pkgs: makeEnv @{
+        inherit pkgs;
+        # ... configuration options ...
+      @};
+    in @{
+      packages = eachSystem (pkgs: rec @{
+        emacs = emacsConfig pkgs;
+        default = emacs;
+      @});
+
+      apps = eachSystem (pkgs:
+        (emacsConfig pkgs).makeApps @{ lockDirName = "lock"; @}
+      );
+    @};
+@}
+@end example
+
+It is also possible to use other libraries such as @uref{https://github.com/numtide/flake-utils, flake-utils} for the boilerplate.
+If you want to track the Emacs configuration in the same repository as a NixOS/home-manager configuration, @uref{https://github.com/gytis-ivaskevicius/flake-utils-plus, flake-utils-plus} is recommended, but it is not described in this manual.
+
+@enumerate
+@item
+@anchor{Define a package}Define a package
+
+
+The configuration is built using @samp{twist.lib.makeEnv}:
+
+@example
+inherit (twist.lib) makeEnv;
+
+emacsConfig = pkgs: makeEnv @{
+  inherit pkgs;
+  emacsPackage = pkgs.emacs;
+
+  # The path to the lock directory
+  lockDir = ./lock;
+
+  # Your Emacs initialization file(s)
+  initFiles = [ ./init.el ];
+
+  # Registries (package-source metadata)
+  registries = [ ... ];
+@};
+@end example
+
+The result is a scope (an attribute set that is also a derivation), so you can add it to the flake outputs:
+
+@example
+packages = eachSystem (pkgs: rec @{
+  emacs = emacsConfig pkgs;
+  default = emacs;
+@});
+@end example
+
+@item
+@anchor{Derive apps for administration}Derive apps for administration
+
+
+You will also need apps to lock and update packages.
+You can add these outputs as follows:
+
+@example
+apps = eachSystem (pkgs:
+  (emacsConfig pkgs).makeApps @{ lockDirName = "lock"; @}
+);
+@end example
+
+You have to set @samp{lockDirName} to the path to the lock directory as a string.
+@samp{makeApps} exposes two apps:
+
+@itemize
+@item
+@samp{nix run .#lock} — regenerates @samp{lock/flake.nix} and @samp{lock/archive.lock}, then runs @samp{nix flake lock} to update @samp{lock/flake.lock}.
+@item
+@samp{nix run .#update} — refreshes the archive lock (@samp{lock/archive.lock}) with latest packages from ELPA package archives.
+@end itemize
+@end enumerate
+
+@node makeEnv options
+@section makeEnv options
+
+The @samp{twist.lib.makeEnv} function accepts the following arguments:
+
+@multitable {aaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+@headitem Argument
+@tab Type
+@tab Default
+@tab Description
+@item @samp{pkgs}
+@tab attrset
+@tab (required)
+@tab Nixpkgs instance
+@item @samp{emacsPackage}
+@tab package
+@tab @samp{pkgs.emacs}
+@tab The Emacs derivation to wrap
+@item @samp{lockDir}
+@tab path
+@tab (required)
+@tab Path to the lock directory (must be a Git-tracked directory)
+@item @samp{initFiles}
+@tab list
+@tab (required)
+@tab List of paths to init files parsed to discover packages
+@item @samp{registries}
+@tab list
+@tab (required)
+@tab List of registry entries; see @ref{Registry Configuration}
+@item @samp{initParser}
+@tab function
+@tab @samp{lib.parseUsePackages @{@}}
+@tab Parser factory; set to @samp{lib.parseSetup @{@}} for @samp{setup.el} configs
+@item @samp{initReader}
+@tab function
+@tab reads file then runs initParser
+@tab Override to customise how init files are read
+@item @samp{extraPackages}
+@tab list
+@tab @samp{["use-package"]} on Emacs <29
+@tab Additional package names to install unconditionally
+@item @samp{localPackages}
+@tab list
+@tab @samp{[]}
+@tab Package names co-located in this repo; excluded from the generated flake
+@item @samp{persistMetadata}
+@tab bool
+@tab @samp{false}
+@tab Persist package metadata JSON in the lock dir (avoids IFD)
+@item @samp{defaultMainIsAscii}
+@tab bool
+@tab @samp{false}
+@tab Assume all package main files are ASCII (required for some IFD avoidance)
+@item @samp{exportManifest}
+@tab bool
+@tab @samp{false}
+@tab Export a manifest file from the wrapper (needed for twist.el hot-reload)
+@item @samp{nativeCompileAheadDefault}
+@tab bool
+@tab @samp{true}
+@tab Ahead-of-time native compilation for all packages
+@item @samp{addSystemPackages}
+@tab bool
+@tab @samp{true}
+@tab Feed @samp{:system-packages} declarations from init files into @samp{exec-path}
+@item @samp{inputOverrides}
+@tab attrset
+@tab @samp{@{@}}
+@tab Per-package source overrides
+@item @samp{configurationRevision}
+@tab string
+@tab @samp{null}
+@tab Revision string embedded in the wrapper
+@item @samp{extraSiteStartElisp}
+@tab string
+@tab @samp{""}
+@tab Extra Emacs Lisp inserted into the site-start file
+@item @samp{initialLibraries}
+@tab list
+@tab @samp{null}
+@tab User-supplied list of Emacs built-in library names (overrides auto-detect)
+@end multitable
+
+@node Registry Configuration
+@section Registry Configuration
+
+@emph{Registries} are repositories from which Twist can discover information on Emacs Lisp packages.
+
+In GNU Emacs, the user can install packages from package archives such as GNU ELPA, NonGNU ELPA, and MELPA@.
+Those archives serve pre-built files and tarballs which can be installed using @samp{package.el}.
+
+While Twist supports package archives, it is primarily intended for building packages from sources.
+Twist somehow needs to discover the source repositories of packages the user wants to install, and those meta-repositories are called registries.
+
+Registries are passed to @samp{twist.lib.makeEnv} as the @samp{registries} argument — a list of attribute sets, each describing one registry:
+
+@example
+registries = [
+  @{
+    type = "elpa";
+    path = inputs.gnu-elpa.outPath + "/elpa-packages";
+    core-src = pkgs.emacs.src;
+    auto-sync-only = true;
+  @}
+  @{
+    name = "melpa";
+    type = "melpa";
+    path = inputs.melpa.outPath + "/recipes";
+  @}
+  @{
+    type = "elpa";
+    path = inputs.nongnu.outPath + "/elpa-packages";
+  @}
+  @{
+    name = "gnu";
+    type = "archive-contents";
+    path = inputs.gnu-elpa-archive.outPath;
+    base-url = "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/";
+  @}
+  @{
+    name = "emacsmirror";
+    type = "gitmodules";
+    path = inputs.epkgs.outPath + "/.gitmodules";
+  @}
+];
+@end example
+
+Note: the old argument name @samp{inventories} is still accepted as a deprecated alias and will print a warning at evaluation time. Use @samp{registries} in all new configurations.
+
+@menu
+* Supported registries::
+* MELPA (pure)::
+* ELPA (pure)::
+* Emacsmirror (pure)::
+* Package archives (impure)::
+* Registry entry fields::
+@end menu
+
+@node Supported registries
+@subsection Supported registries
+
+The following values of @samp{type} are supported:
+
+@itemize
+@item
+@samp{melpa} — the @samp{recipes/} directory of @uref{https://github.com/melpa/melpa, MELPA} or a fork; contains MELPA-style recipe files.
+@item
+@samp{elpa} — the @samp{elpa-packages} file of @uref{https://git.savannah.gnu.org/cgit/emacs/elpa.git/, GNU ELPA} or @uref{https://git.savannah.gnu.org/cgit/emacs/nongnu.git/, NonGNU ELPA}.
+@item
+@samp{archive-contents} — a pre-built package archive as supported by @samp{package.el} (e.g. an @samp{archive-contents} file).  This is an @emph{impure} registry; see below.
+@item
+@samp{gitmodules} — the @samp{.gitmodules} list of @uref{https://github.com/emacsmirror/epkgs, emacsmirror/epkgs}.
+@end itemize
+
+@emph{Impure} registries (@samp{archive-contents}) require Nix to make a network connection.
+The user must pass @samp{--impure} when running the lock operation.
+All other registry types are @emph{pure}: they are tracked as Nix flake inputs and locked to particular revisions.
+
+Once all packages in a configuration are locked, the user can build the configuration without @samp{--impure}, which means the entire configuration is pure.
+Every time the user adds a new package, the lock operation must be re-run.
+
+@node MELPA (pure)
+@subsection MELPA (pure)
+
+Use a flake input pointing to the MELPA repository (or a fork) with @samp{flake = false}, then reference its @samp{recipes/} directory:
+
+@example
+# In flake inputs:
+melpa = @{
+  url = "github:melpa/melpa";
+  flake = false;
+@};
+
+# In registries:
+@{
+  name = "melpa";
+  type = "melpa";
+  path = inputs.melpa.outPath + "/recipes";
+@}
+@end example
+
+@node ELPA (pure)
+@subsection ELPA (pure)
+
+Use a flake input pointing to the GNU ELPA or NonGNU ELPA repository, then reference the @samp{elpa-packages} file.
+For GNU ELPA, you should also supply @samp{core-src} (the Emacs source tree) so that Core ELPA packages can be built from source, and set @samp{auto-sync-only = true} to skip packages that cannot be built from source:
+
+@example
+# Recommended configuration for GNU ELPA:
+@{
+  type = "elpa";
+  path = inputs.gnu-elpa.outPath + "/elpa-packages";
+  core-src = pkgs.emacs.src;
+  auto-sync-only = true;
+@}
+
+# NonGNU ELPA (no core-src needed):
+@{
+  type = "elpa";
+  path = inputs.nongnu.outPath + "/elpa-packages";
+@}
+@end example
+
+@node Emacsmirror (pure)
+@subsection Emacsmirror (pure)
+
+Emacsmirror tracks almost every Emacs Lisp package ever published.
+Use its @samp{.gitmodules} file:
+
+@example
+# In flake inputs:
+epkgs = @{
+  url = "github:emacsmirror/epkgs";
+  flake = false;
+@};
+
+# In registries:
+@{
+  name = "emacsmirror";
+  type = "gitmodules";
+  path = inputs.epkgs.outPath + "/.gitmodules";
+@}
+@end example
+
+@node Package archives (impure)
+@subsection Package archives (impure)
+
+An @samp{archive-contents} registry points to a pre-built archive.
+Because Nix must download the archive-contents file at evaluation time, this requires @samp{--impure}:
+
+@example
+@{
+  name = "gnu";
+  type = "archive-contents";
+  path = inputs.gnu-elpa-archive.outPath;
+  base-url = "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/";
+@}
+@end example
+
+Using a mirror (as in the example above) avoids relying on the live GNU ELPA server.
+
+@node Registry entry fields
+@subsection Registry entry fields
+
+@multitable {aaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+@headitem Field
+@tab Applies to
+@tab Description
+@item @samp{type}
+@tab all
+@tab Registry type (required): @samp{melpa}, @samp{elpa}, @samp{archive-contents}, @samp{gitmodules}
+@item @samp{name}
+@tab all
+@tab Optional name for pinning or disambiguation
+@item @samp{path}
+@tab all except remote archives
+@tab Path to the registry data (flake input @samp{.outPath})
+@item @samp{core-src}
+@tab @samp{elpa}
+@tab Path to Emacs source tree for building Core ELPA packages
+@item @samp{auto-sync-only}
+@tab @samp{elpa}
+@tab If @samp{true}, skip packages that cannot be built from source
+@item @samp{base-url}
+@tab @samp{archive-contents}
+@tab Base URL from which to download package tarballs
+@end multitable
+
+@node Customization
+@section Customization
+
+@menu
+* Org-babel configuration::
+* Using a non-stable version of GNU Emacs::
+* Using a configuration syntax other than use-package::
+@end menu
+
+@node Org-babel configuration
+@subsection Org-babel configuration
+
+The @uref{https://github.com/emacs-twist/org-babel, org-babel} library for Nix allows you to define Twist configurations (and sub-profiles) from a single Org file using Babel source blocks.
+Refer to that library's documentation for details.
+
+@node Using a non-stable version of GNU Emacs
+@subsection Using a non-stable version of GNU Emacs
+
+You can pass any Emacs derivation as @samp{emacsPackage}.
+For example, to use the latest unstable Emacs from @uref{https://github.com/nix-community/emacs-overlay, emacs-overlay}:
+
+@example
+inputs.emacs-overlay.url = "github:nix-community/emacs-overlay";
+
+# In makeEnv:
+emacsPackage = inputs.emacs-overlay.packages.$@{system@}.emacs-unstable;
+@end example
+
+@node Using a configuration syntax other than use-package
+@subsection Using a configuration syntax other than use-package
+
+By default Twist parses @samp{use-package} declarations to discover which packages to install.
+To use @uref{https://github.com/jwiegley/setup.el, setup.el} instead, pass @samp{lib.parseSetup @{@}} as @samp{initParser}:
+
+@example
+makeEnv @{
+  # ...
+  initParser = twist.lib.parseSetup @{@};
+@}
+@end example
+
+Both @samp{lib.parseUsePackages} and @samp{lib.parseSetup} are exported from @samp{twist.lib}.
+
+@node How to run the configuration
+@chapter How to run the configuration
+
+@menu
+* Installation with home-manager::
+* Normal installation (without home-manager)::
+* Bubblewrap::
+@end menu
+
+@node Installation with home-manager
+@section Installation with home-manager
+
+The recommended way to install Twist on a user account is through the Home Manager module.
+Add the module to your Home Manager configuration:
+
+@example
+inputs.twist.url = "github:emacs-twist/twist.nix";
+
+# In home-manager modules list:
+twist.homeModules.emacs-twist
+@end example
+
+The module exposes options under @samp{programs.emacs-twist}:
+
+@multitable {aaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+@headitem Option
+@tab Type
+@tab Default
+@tab Description
+@item @samp{enable}
+@tab bool
+@tab @samp{false}
+@tab Enable the Emacs Twist module
+@item @samp{name}
+@tab string
+@tab @samp{"emacs"}
+@tab Name of the wrapper script in @samp{$PATH}
+@item @samp{directory}
+@tab string
+@tab @samp{".config/emacs"}
+@tab Path to @samp{user-emacs-directory} relative to @samp{$HOME}
+@item @samp{config}
+@tab attrset
+@tab (required)
+@tab The result of @samp{twist.lib.makeEnv @{ ... @}}
+@item @samp{createInitFile}
+@tab bool
+@tab @samp{false}
+@tab Write a combined @samp{init.el} into the directory
+@item @samp{earlyInitFile}
+@tab path
+@tab @samp{null}
+@tab Path to an @samp{early-init.el} to install
+@item @samp{createManifestFile}
+@tab bool
+@tab @samp{false}
+@tab Write the manifest JSON into the directory
+@item @samp{manifestFileName}
+@tab string
+@tab @samp{"twist-manifest.json"}
+@tab Filename of the manifest, relative to @samp{user-emacs-directory}
+@item @samp{emacsclient.enable}
+@tab bool
+@tab @samp{false}
+@tab Install @samp{emacsclient} alongside the wrapper
+@item @samp{serviceIntegration.enable}
+@tab bool
+@tab @samp{false}
+@tab Enable a systemd service for the Emacs daemon
+@item @samp{icons.enable}
+@tab bool
+@tab @samp{true}
+@tab Install Emacs application icons
+@item @samp{desktopItem.desktopName}
+@tab string
+@tab @samp{"Emacs"}
+@tab Long name for the desktop entry
+@item @samp{desktopItem.mimeTypes}
+@tab list
+@tab @samp{["text/plain" "inode/directory"]}
+@tab MIME types associated with the entry
+@end multitable
+
+A minimal Home Manager configuration looks like:
+
+@example
+programs.emacs-twist = @{
+  enable = true;
+  config = twist.lib.makeEnv @{
+    inherit pkgs;
+    emacsPackage = pkgs.emacs;
+    lockDir = ./lock;
+    initFiles = [ ./init.el ];
+    registries = [ ... ];
+  @};
+  createInitFile = true;
+  earlyInitFile = ./early-init.el;
+  emacsclient.enable = true;
+  serviceIntegration.enable = true;
+@};
+@end example
+
+@node Normal installation (without home-manager)
+@section Normal installation (without home-manager)
+
+If you are not using Home Manager, you can add the Twist configuration derivation directly to your environment.
+The result of @samp{makeEnv} is itself a derivation (a wrapper around the Emacs binary), so you can install it via @samp{nix profile install} or reference it in a @samp{nix shell}:
+
+@example
+nix build .#emacs
+result/bin/emacs
+@end example
+
+@node Bubblewrap
+@section Bubblewrap
+
+On NixOS, Emacs can be sandboxed with Bubblewrap.
+Refer to the NixOS documentation for details on wrapping programs.
+
+@node Developing the configuration
+@chapter Developing the configuration
+
+@menu
+* Basic workflow::
+* Working around sources::
+* Custom build processes::
+* Checking the versions of packages::
+@end menu
+
+@node Basic workflow
+@section Basic workflow
+
+The basic development loop is:
+
+@enumerate
+@item
+Add or modify @samp{use-package} (or @samp{setup.el}) forms in your @samp{init.el}.
+@item
+Run @samp{nix run .#lock} to regenerate the lock files for any new packages.
+@item
+Run @samp{nix build .#emacs} (or @samp{nix build .#default}) to build the configuration.
+@item
+Run @samp{nix run .#update} periodically to pull in new versions from ELPA archives.
+@end enumerate
+
+@node Working around sources
+@section Working around sources
+
+If a package's upstream source is temporarily unavailable or you need to override it, use @samp{inputOverrides}.
+For example, to use a GitHub mirror of a package whose canonical host is unreliable:
+
+@example
+inputOverrides = @{
+  tramp = _: _: @{
+    origin = @{
+      type = "github";
+      owner = "emacs-straight";
+      repo = "tramp";
+      ref = "master";
+    @};
+  @};
+@};
+@end example
+
+To remove build-time files that would otherwise cause build failures:
+
+@example
+inputOverrides = @{
+  bbdb = _: super: @{
+    files = builtins.removeAttrs super.files [
+      "bbdb-notmuch.el"
+      "bbdb-vm.el"
+      "bbdb-vm-aux.el"
+    ];
+  @};
+@};
+@end example
+
+@node Custom build processes
+@section Custom build processes
+
+Individual package builds can be customised through @samp{inputOverrides} by overriding attributes in the package's attribute set.
+Refer to the package build derivation in @samp{pkgs/emacs/build/} for available attributes.
+
+@node Checking the versions of packages
+@section Checking the versions of packages
+
+@samp{depsCheck} attribute is a derivation that checks version boundaries between Emacs Lisp packages.
+If any of the dependencies are lower than the versions specified in the @samp{Package-Requires} header of their dependants, it will exit with non-zero:
+
+@example
+nix build .#emacs.depsCheck --print-build-logs
+@end example
+
+You can add it to the @samp{checks} output of your flake:
+
+@example
+@{
+  outputs = inputs:
+    let
+      emacs = twist.lib.makeEnv @{ ... @};
+    in @{
+      checks.x86_64-linux.elisp-versions = emacs.depsCheck;
+    @};
+@}
+@end example
+
+@node Troubleshooting
+@chapter Troubleshooting
+
+This section describes how to deal with common errors in building configurations.
+
+@menu
+* Package not found after editing init.el: Package not found after editing initel. 
+* Rate-limited by GitHub::
+* Build failure on a specific package::
+@end menu
+
+@node Package not found after editing initel
+@section Package not found after editing init.el
+
+If Twist cannot find a package you just added, run the lock command to update the lock files:
+
+@example
+nix run .#lock
+@end example
+
+Every new package must be locked before it can be built in pure mode.
+
+@node Rate-limited by GitHub
+@section Rate-limited by GitHub
+
+See @ref{Add an access token to GitHub} above for instructions on adding a GitHub access token to @samp{nix.conf}.
+
+@node Build failure on a specific package
+@section Build failure on a specific package
+
+Use @samp{nix eval} to inspect the package metadata:
+
+@example
+nix eval .#emacs.packageInputs.<package-name>
+@end example
+
+You can also check reverse dependencies:
+
+@example
+nix eval .#emacs.revDeps.<package-name>
+@end example
+
+@node Tips
+@chapter Tips
+
+@menu
+* --dry-run is your friend::
+* Prefer building from sources::
+* Inspecting the package set::
+@end menu
+
+@node --dry-run is your friend
+@section --dry-run is your friend
+
+To quickly examine sanity of your configuration, a recommended way is to build the configuration with @samp{--dry-run} flag:
+
+@example
+nix build .#emacs --dry-run
+@end example
+
+If the command fails with non-zero exit code, it is likely that there is something wrong with your configuration, not an individual Emacs Lisp package.
+
+@node Prefer building from sources
+@section Prefer building from sources
+
+It is recommended to build a package from an upstream whenever possible.
+
+This is because an archive tarball can be deleted from its server when the package creates a new release:
+
+@example
+error: unable to download 'https://elpa.gnu.org/packages/vertico-0.18.tar': HTTP error 404 ('Not Found')
+
+       response body:
+
+       <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+       <html><head>
+       <title>404 Not Found</title>
+       </head><body>
+       <h1>Not Found</h1>
+       <p>The requested URL was not found on this server.</p>
+       <hr>
+       <address>Apache/2.4.51 (Debian) Server at elpa.gnu.org Port 443</address>
+       </body></html>
+@end example
+
+Use an @samp{elpa} registry entry with @samp{auto-sync-only = true} and fall back to an @samp{archive-contents} mirror for packages that cannot be built from source.
+
+@node Inspecting the package set
+@section Inspecting the package set
+
+You can explore the full package metadata without building:
+
+@example
+nix eval .#emacs.packageInputs --json | jq .
+@end example
+
+@node Limitations
+@chapter Limitations
+
+@menu
+* use-package-always-ensure option::
+* Emacs Lisp packages that cannot be built with Twist::
+@end menu
+
+@node use-package-always-ensure option
+@section use-package-always-ensure option
+
+@uref{https://github.com/jwiegley/use-package, use-package} provides @samp{use-package-always-ensure} option, which makes @samp{package.el} install packages that have no @samp{:ensure} option set:
+
+@lisp
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+@end lisp
+
+Unfortunately, Twist cannot handle this option well at the time of writing.
+
+A better way is to @strong{not} use @samp{use-package-always-ensure} option.
+Add @samp{:ensure t} option explicitly to each declaration of a package you want to install.
+This way, you can simply pass the init file to Twist and also have a choice of explicitly installing some GNU ELPA Core libraries from the upstream.
+
+@node Emacs Lisp packages that cannot be built with Twist
+@section Emacs Lisp packages that cannot be built with Twist
+
+It is known that Twist cannot build the following packages:
+
+@itemize
+@item
+@samp{pdf-tools}
+@end itemize
+
+Twist simply cannot build these packages for some technical reasons.
+It would be better for Twist to support all packages on GNU/NonGNU ELPA and MELPA, but it is not the case.
+
+For the latest information, see @uref{https://github.com/emacs-twist/twist.nix/issues, Issues} of Twist.
+If you have found any other packages that cannot be built using Twist, please file an issue.
 
 @bye
