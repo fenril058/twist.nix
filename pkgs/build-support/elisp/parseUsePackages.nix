@@ -5,7 +5,7 @@
 with builtins; let
   blocks = fromElisp.fromElisp string;
   plistGet = xs: key:
-    if length xs == 0
+    if length xs < 2
     then null
     else if head xs == key
     then elemAt xs 1
@@ -22,7 +22,9 @@ with builtins; let
   usePackageForms = filter isUsePackageForm blocks;
   enameFromUsePackage = form: elemAt form 1;
   listToSystemPackages = x:
-    if isList (head x)
+    if x == []
+    then []
+    else if isList (head x)
     then map (pname: elemAt pname 1) x
     else tail x;
   toSystemPackages = x:

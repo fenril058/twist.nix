@@ -47,4 +47,26 @@ in
         systemPackages = [];
       };
     };
+
+    testTrailingDisabledKeyword = {
+      expr = validateConfig (parseUsePackages {} ''
+        (use-package foo :disabled)
+      '');
+      expected = {
+        elispPackages = [];
+        elispPackagePins = {};
+        systemPackages = [];
+      };
+    };
+
+    testEnsureSystemPackageEmpty = {
+      expr = parseUsePackages {} ''
+        (use-package foo :ensure t :ensure-system-package ())
+      '';
+      expected = {
+        elispPackages = ["foo"];
+        elispPackagePins = {};
+        systemPackages = [];
+      };
+    };
   }
