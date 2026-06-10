@@ -35,7 +35,7 @@
       (split "\n")
       (filter isString)
       # Exclude entries starting with _
-      (map (match "submodule.([^_][^.]+).url=(.+)"))
+      (map (match "submodule.([^_][^.]*).url=(.+)"))
       (filter isList)
       (map (x: {
         name = elemAt x 0;
