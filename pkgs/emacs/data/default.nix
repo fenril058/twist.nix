@@ -81,7 +81,7 @@ in
     findFromPinned = revDep: ename: inventory:
       if hasAttr ename inventory
       then inventory.${ename}
-      else if inventory ? _impure
+      else if inventory ? _impure && inventory._impure ? ${ename}
       then inventory._impure.${ename}
       else throw "Package ${ename} required by ${revDep} does not exist in the pinned inventory";
 
