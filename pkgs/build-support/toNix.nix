@@ -11,7 +11,7 @@
     (lib.concatMapStringsSep " " go v);
 
   escapeAttrName = str:
-    if match "[a-zA-Z_][-a-zA-Z0-9_']+" str != null
+    if match "[a-zA-Z_][-a-zA-Z0-9_']*" str != null
     then str
     else "\"${str}\"";
 
