@@ -493,7 +493,7 @@ You have to set @samp{lockDirName} to the path to the lock directory as a string
 
 The @samp{twist.lib.makeEnv} function accepts the following arguments:
 
-@multitable {aaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+@multitable {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa} {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
 @headitem Argument
 @tab Type
 @tab Default
@@ -520,8 +520,8 @@ The @samp{twist.lib.makeEnv} function accepts the following arguments:
 @tab List of registry entries; see @ref{Registry Configuration}
 @item @samp{initParser}
 @tab function
-@tab @samp{lib.parseUsePackages @{@}}
-@tab Parser factory; set to @samp{lib.parseSetup @{@}} for @samp{setup.el} configs
+@tab @samp{twist.lib.parseUsePackages @{@}}
+@tab Parser factory; set to @samp{twist.lib.parseSetup @{@}} for @samp{setup.el} configs
 @item @samp{initReader}
 @tab function
 @tab reads file then runs initParser
@@ -550,6 +550,18 @@ The @samp{twist.lib.makeEnv} function accepts the following arguments:
 @tab bool
 @tab @samp{true}
 @tab Ahead-of-time native compilation for all packages
+@item @samp{wantExtraOutputs}
+@tab bool
+@tab @samp{true}
+@tab Build extra outputs of packages, e.g. Info manuals
+@item @samp{extraOutputsToInstall}
+@tab list
+@tab @samp{["info"]} if @samp{wantExtraOutputs}
+@tab Extra derivation outputs installed into the environment
+@item @samp{postCommandOnGeneratingLockDir}
+@tab string
+@tab @samp{null}
+@tab Command run at the repository root after @samp{generateLockDir}
 @item @samp{addSystemPackages}
 @tab bool
 @tab @samp{true}
@@ -642,6 +654,8 @@ The following values of @samp{type} are supported:
 @item
 @samp{gitmodules} — the @samp{.gitmodules} list of @uref{https://github.com/emacsmirror/epkgs, emacsmirror/epkgs}.
 @end itemize
+
+A fifth type, @samp{archive}, also exists but is on track to be removed upstream and should not be used in new configurations.
 
 @emph{Impure} registries (@samp{archive-contents}) require Nix to make a network connection.
 The user must pass @samp{--impure} when running the lock operation.
@@ -789,7 +803,7 @@ emacsPackage = inputs.emacs-overlay.packages.$@{system@}.emacs-unstable;
 @subsection Using a configuration syntax other than use-package
 
 By default Twist parses @samp{use-package} declarations to discover which packages to install.
-To use @uref{https://github.com/jwiegley/setup.el, setup.el} instead, pass @samp{lib.parseSetup @{@}} as @samp{initParser}:
+To use @uref{https://github.com/jwiegley/setup.el, setup.el} instead, pass @samp{twist.lib.parseSetup @{@}} as @samp{initParser}:
 
 @example
 makeEnv @{
