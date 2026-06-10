@@ -19,8 +19,9 @@ writeShellScript "lock" ''
     exit 1
   fi
 
-  for file in "$outDir/flake.nix" "$outDir/archive.lock"
+  for srcFile in ${src}/*.*
   do
+    file="$outDir/$(basename "$srcFile")"
     if [[ ! -f "$file" ]]
     then
       touch "$file"
