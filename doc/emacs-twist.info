@@ -560,26 +560,29 @@ File: emacs-twist.info,  Node: makeEnv options,  Next: Registry Configuration,  
 
 The ‘twist.lib.makeEnv’ function accepts the following arguments:
 
-Argument                      Type       Default                           Description
----------------------------------------------------------------------------------------------------------------------------------------------------------------
-‘pkgs’                        attrset    (required)                        Nixpkgs instance
-‘emacsPackage’                package    ‘pkgs.emacs’                      The Emacs derivation to wrap
-‘lockDir’                     path       (required)                        Path to the lock directory (must be a Git-tracked directory)
-‘initFiles’                   list       (required)                        List of paths to init files parsed to discover packages
-‘registries’                  list       (required)                        List of registry entries; see *note Registry Configuration::
-‘initParser’                  function   ‘lib.parseUsePackages {}’         Parser factory; set to ‘lib.parseSetup {}’ for ‘setup.el’ configs
-‘initReader’                  function   reads file then runs initParser   Override to customise how init files are read
-‘extraPackages’               list       ‘["use-package"]’ on Emacs <29    Additional package names to install unconditionally
-‘localPackages’               list       ‘[]’                              Package names co-located in this repo; excluded from the generated flake
-‘persistMetadata’             bool       ‘false’                           Persist package metadata JSON in the lock dir (avoids IFD)
-‘defaultMainIsAscii’          bool       ‘false’                           Assume all package main files are ASCII (required for some IFD avoidance)
-‘exportManifest’              bool       ‘false’                           Export a manifest file from the wrapper (needed for twist.el hot-reload)
-‘nativeCompileAheadDefault’   bool       ‘true’                            Ahead-of-time native compilation for all packages
-‘addSystemPackages’           bool       ‘true’                            Feed ‘:system-packages’ declarations from init files into ‘exec-path’
-‘inputOverrides’              attrset    ‘{}’                              Per-package source overrides
-‘configurationRevision’       string     ‘null’                            Revision string embedded in the wrapper
-‘extraSiteStartElisp’         string     ‘""’                              Extra Emacs Lisp inserted into the site-start file
-‘initialLibraries’            list       ‘null’                            User-supplied list of Emacs built-in library names (overrides auto-detect)
+Argument                           Type       Default                            Description
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+‘pkgs’                             attrset    (required)                         Nixpkgs instance
+‘emacsPackage’                     package    ‘pkgs.emacs’                       The Emacs derivation to wrap
+‘lockDir’                          path       (required)                         Path to the lock directory (must be a Git-tracked directory)
+‘initFiles’                        list       (required)                         List of paths to init files parsed to discover packages
+‘registries’                       list       (required)                         List of registry entries; see *note Registry Configuration::
+‘initParser’                       function   ‘twist.lib.parseUsePackages {}’    Parser factory; set to ‘twist.lib.parseSetup {}’ for ‘setup.el’ configs
+‘initReader’                       function   reads file then runs initParser    Override to customise how init files are read
+‘extraPackages’                    list       ‘["use-package"]’ on Emacs <29     Additional package names to install unconditionally
+‘localPackages’                    list       ‘[]’                               Package names co-located in this repo; excluded from the generated flake
+‘persistMetadata’                  bool       ‘false’                            Persist package metadata JSON in the lock dir (avoids IFD)
+‘defaultMainIsAscii’               bool       ‘false’                            Assume all package main files are ASCII (required for some IFD avoidance)
+‘exportManifest’                   bool       ‘false’                            Export a manifest file from the wrapper (needed for twist.el hot-reload)
+‘nativeCompileAheadDefault’        bool       ‘true’                             Ahead-of-time native compilation for all packages
+‘wantExtraOutputs’                 bool       ‘true’                             Build extra outputs of packages, e.g.  Info manuals
+‘extraOutputsToInstall’            list       ‘["info"]’ if ‘wantExtraOutputs’   Extra derivation outputs installed into the environment
+‘postCommandOnGeneratingLockDir’   string     ‘null’                             Command run at the repository root after ‘generateLockDir’
+‘addSystemPackages’                bool       ‘true’                             Feed ‘:system-packages’ declarations from init files into ‘exec-path’
+‘inputOverrides’                   attrset    ‘{}’                               Per-package source overrides
+‘configurationRevision’            string     ‘null’                             Revision string embedded in the wrapper
+‘extraSiteStartElisp’              string     ‘""’                               Extra Emacs Lisp inserted into the site-start file
+‘initialLibraries’                 list       ‘null’                             User-supplied list of Emacs built-in library names (overrides auto-detect)
 
 
 File: emacs-twist.info,  Node: Registry Configuration,  Next: Customization,  Prev: makeEnv options,  Up: Initial configuration of a project
@@ -663,6 +666,9 @@ The following values of ‘type’ are supported:
      _impure_ registry; see below.
    • ‘gitmodules’ — the ‘.gitmodules’ list of emacsmirror/epkgs
      (https://github.com/emacsmirror/epkgs).
+
+   A fifth type, ‘archive’, also exists but is on track to be removed
+upstream and should not be used in new configurations.
 
    _Impure_ registries (‘archive-contents’) require Nix to make a
 network connection.  The user must pass ‘--impure’ when running the lock
@@ -825,8 +831,8 @@ File: emacs-twist.info,  Node: Using a configuration syntax other than use-packa
 
 By default Twist parses ‘use-package’ declarations to discover which
 packages to install.  To use setup.el
-(https://github.com/jwiegley/setup.el) instead, pass ‘lib.parseSetup {}’
-as ‘initParser’:
+(https://github.com/jwiegley/setup.el) instead, pass
+‘twist.lib.parseSetup {}’ as ‘initParser’:
 
      makeEnv {
        # ...
@@ -1213,37 +1219,37 @@ Node: Define flake outputs15893
 Ref: Define a package17553
 Ref: Derive apps for administration18295
 Node: makeEnv options19016
-Node: Registry Configuration22019
-Node: Supported registries24023
-Node: MELPA (pure)25394
-Node: ELPA (pure)25930
-Node: Emacsmirror (pure)26763
-Node: Package archives (impure)27309
-Node: Registry entry fields27986
-Node: Customization29034
-Node: Org-babel configuration29329
-Node: Using a non-stable version of GNU Emacs29753
-Node: Using a configuration syntax other than use-package30373
-Node: How to run the configuration31031
-Node: Installation with home-manager31354
-Node: Normal installation (without home-manager)34277
-Node: Bubblewrap34880
-Node: Developing the configuration35161
-Node: Basic workflow35479
-Node: Working around sources36034
-Node: Custom build processes36939
-Node: Checking the versions of packages37382
-Node: Troubleshooting38152
-Node: Package not found after editing initel38542
-Node: Rate-limited by GitHub38947
-Node: Build failure on a specific package39289
-Node: Tips39689
-Node: --dry-run is your friend39900
-Node: Prefer building from sources40379
-Node: Inspecting the package set41462
-Node: Limitations41746
-Node: use-package-always-ensure option41947
-Node: Emacs Lisp packages that cannot be built with Twist42828
+Node: Registry Configuration22587
+Node: Supported registries24591
+Node: MELPA (pure)26092
+Node: ELPA (pure)26628
+Node: Emacsmirror (pure)27461
+Node: Package archives (impure)28007
+Node: Registry entry fields28684
+Node: Customization29732
+Node: Org-babel configuration30027
+Node: Using a non-stable version of GNU Emacs30451
+Node: Using a configuration syntax other than use-package31071
+Node: How to run the configuration31735
+Node: Installation with home-manager32058
+Node: Normal installation (without home-manager)34981
+Node: Bubblewrap35584
+Node: Developing the configuration35865
+Node: Basic workflow36183
+Node: Working around sources36738
+Node: Custom build processes37643
+Node: Checking the versions of packages38086
+Node: Troubleshooting38856
+Node: Package not found after editing initel39246
+Node: Rate-limited by GitHub39651
+Node: Build failure on a specific package39993
+Node: Tips40393
+Node: --dry-run is your friend40604
+Node: Prefer building from sources41083
+Node: Inspecting the package set42166
+Node: Limitations42450
+Node: use-package-always-ensure option42651
+Node: Emacs Lisp packages that cannot be built with Twist43532
 
 End Tag Table
 
