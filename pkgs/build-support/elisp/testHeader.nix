@@ -110,6 +110,20 @@ in
       };
     };
 
+    testBareSemicolonStopsAuthorContinuation = {
+      expr = parseElispHeaders ";; Author: Foo Bar\n;;\n;; This file is free software.\n";
+      expected = {
+        Author = "Foo Bar";
+      };
+    };
+
+    testWhitespaceOnlyLineStopsContinuation = {
+      expr = parseElispHeaders ";; Author: Foo Bar\n;;   \n;; More text\n";
+      expected = {
+        Author = "Foo Bar";
+      };
+    };
+
     testMiniEdit = {
       expr = parseElispHeaders (readFile ./testdata/header-miniedit.el);
       expected = {
