@@ -26,4 +26,8 @@ in
       expected = ''
         { description = "description"; inputs = { bind-key = { flake = false; owner = "jwiegley"; repo = "use-package"; type = "github"; }; "bind-key+" = { flake = false; owner = "jwiegley"; repo = "use-package"; type = "github"; }; }; outputs = <LAMBDA>; }'';
     };
+    testSingleCharAttrName = {
+      expr = toNix { a = 1; };
+      expected = "{ a = 1; }";
+    };
   }
