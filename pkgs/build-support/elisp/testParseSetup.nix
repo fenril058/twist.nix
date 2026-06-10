@@ -33,6 +33,17 @@ in
       };
     };
 
+    testBareTopLevelAtom = {
+      expr = parseSetup ''
+        t
+        (setup (:package dash))
+      '';
+      expected = {
+        elispPackages = ["dash"];
+        systemPackages = [];
+      };
+    };
+
     testNested = {
       expr = parseSetup ''
 
