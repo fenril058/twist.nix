@@ -9,7 +9,7 @@
 with builtins;
   string: let
     setups = lib.pipe (fromElisp.fromElisp string) [
-      (filter (block: head block == "setup"))
+      (filter (block: isList block && block != [] && head block == "setup"))
       (map tail)
     ];
 
