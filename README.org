@@ -84,6 +84,7 @@ Add twist to your flake inputs and build an Emacs environment with =makeEnv=:
 }
 #+end_src
 
+The snippet hardcodes =x86_64-linux= for brevity; the bundled template uses [[https://github.com/nix-systems/default][nix-systems]] to cover all systems.
 Your =init.el= drives package selection through =use-package= (or =setup.el=). Run =nix run .#lock= to
 generate the lock files, then =nix build=. The quickest way to start from scratch is the bundled
 template:
