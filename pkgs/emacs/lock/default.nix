@@ -19,19 +19,18 @@ assert (flakeNix || archiveLock); let
 
   archiveLockData = lib.pipe packageInputs [
     (lib.filterAttrs (_: attrs: attrs ? archive))
-    (mapAttrs (_:
-      lib.getAttrs [
-        "version"
-        "archive"
-        "packageRequires"
-        "inventory"
-      ]))
+    (mapAttrs (_: attrs:
+      {
+        version = attrs.version or null;
+      }
+      // lib.getAttrs ["archive" "packageRequires" "inventory"] attrs))
   ];
 
   packageMetadata =
     mapAttrs (name: attrs: {
       inherit (attrs.src) narHash;
-      inherit (attrs) version packageRequires meta;
+      version = attrs.version or null;
+      inherit (attrs) packageRequires meta;
       # There can be packages that lack Author header, so set null in that case.
       author =
         attrs.author
