@@ -103,7 +103,13 @@ let
             ++ (if entry ? texinfo then toList entry.texinfo else [ ])
           )
           [
-            (filter (file: !(file == ".dir-locals.el" || match "(.+-)?tests?\.el" file != null)))
+            (filter (
+              file:
+              let
+                bn = baseNameOf file;
+              in
+              !(bn == ".dir-locals.el" || match "(.+-)?tests?\\.el" bn != null)
+            ))
             (filter p)
             fileListToAttrs
           ];
