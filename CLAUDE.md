@@ -21,14 +21,14 @@ This is a fork of `emacs-twist/twist.nix`.
 
 - **`master`** — a pure mirror of `upstream/master`. Do **not** commit here;
   only fast-forward it from upstream.
-- **`develop`** — personal integration branch carrying all local changes. Day
+- **`local`** — personal integration branch carrying all local changes. Day
   to day work and builds use this. Rebase it onto `master` when upstream moves.
 - **topic branches** (`fix/...`, `feat/...`) — branched off `master`, one
-  change each, kept PR-ready for upstream. They are merged into `develop`.
+  change each, kept PR-ready for upstream. They are merged into `local`.
 
 `upstream` remote: `https://github.com/emacs-twist/twist.nix`.
 
-Consequence: avoid repo-wide reformatting on `develop`. A mass diff would
+Consequence: avoid repo-wide reformatting on `local`. A mass diff would
 conflict on every rebase against `master`.
 
 ## Layout
