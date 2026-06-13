@@ -142,6 +142,12 @@ in {
       };
 
       desktopItem = {
+        enable = mkOption {
+          type = types.bool;
+          description = "Whether to install a desktop item for the wrapper";
+          default = true;
+        };
+
         desktopName = mkOption {
           type = types.str;
           description = "Long name of the desktop item";
@@ -161,7 +167,7 @@ in {
     home.packages =
       [wrapper]
       ++ lib.optional cfg.icons.enable emacs-config.icons
-      ++ lib.optional (!pkgs.stdenv.isDarwin) (pkgs.runCommandLocal "${cfg.name}-desktop-item" {
+      ++ lib.optional (cfg.desktopItem.enable && !pkgs.stdenv.isDarwin) (pkgs.runCommandLocal "${cfg.name}-desktop-item" {
           nativeBuildInputs = [pkgs.copyDesktopItems];
           desktopItems = desktopItem;
         } ''
