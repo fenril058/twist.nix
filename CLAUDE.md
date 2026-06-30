@@ -1,35 +1,29 @@
 # CLAUDE.md
 
-Guidance for working in this repository.
-
 ## What this is
 
-`twist.nix` is a Nix library — source-based build machinery for Emacs Lisp
-packages and configurations. It builds packages directly from upstream Git
-repositories (MELPA recipes, GNU/NonGNU ELPA, EmacsMirror) rather than from
-pre-built archives, and tracks versions in `flake.lock`. It is the build layer
-of the [emacs-twist](https://github.com/emacs-twist) project (the counterpart
-to package-build).
+`twist.nix` builds Emacs Lisp packages from upstream Git repositories (MELPA recipes, GNU/NonGNU ELPA, EmacsMirror) rather than from pre-built archives, tracking versions in `flake.lock`.
+It is the build layer of [emacs-twist](https://github.com/emacs-twist) (the counterpart to package-build).
 
-The public entry points live in `flake.nix` under `lib` (notably
-`lib.makeEnv`, `lib.buildElispPackage`, `lib.parseUsePackages`). The `overlays`
-and overlay-based `emacsTwist` API are deprecated.
+The public entry points live in `flake.nix` under `lib` (notably `lib.makeEnv`, `lib.buildElispPackage`, `lib.parseUsePackages`).
+The `overlays` and overlay-based `emacsTwist` API are deprecated.
 
 ## Fork / branch model
 
 This is a fork of `emacs-twist/twist.nix`.
 
-- **`master`** — a pure mirror of `upstream/master`. Do **not** commit here;
-  only fast-forward it from upstream.
-- **`local`** — personal integration branch carrying all local changes. Day
-  to day work and builds use this. Rebase it onto `master` when upstream moves.
-- **topic branches** (`fix/...`, `feat/...`) — branched off `master`, one
-  change each, kept PR-ready for upstream. They are merged into `local`.
+- **`master`** — a pure mirror of `upstream/master`.
+  Do **not** commit here; only fast-forward it from upstream.
+- **`local`** — personal integration branch carrying all local changes.
+  Day to day work and builds use this.
+  Rebase it onto `master` when upstream moves.
+- **topic branches** (`fix/...`, `feat/...`) — branched off `master`, one change each, kept PR-ready for upstream.
+  They are merged into `local`.
 
 `upstream` remote: `https://github.com/emacs-twist/twist.nix`.
 
-Consequence: avoid repo-wide reformatting on `local`. A mass diff would
-conflict on every rebase against `master`.
+Consequence: avoid repo-wide reformatting on `local`.
+A mass diff would conflict on every rebase against `master`.
 
 ## Layout
 
@@ -63,19 +57,9 @@ nix develop -c just local-update-flake
 nix develop -c just test
 ```
 
-Inspect flake outputs:
-
-```sh
-nix flake show
-```
-
 ## Conventions
 
-- Most `pkgs/**` files follow `nixfmt-rfc-style`; `modules/home-manager.nix`
-  uses an older aligned style. Match the surrounding file rather than
-  reformatting it.
-- The `registries` argument schema (entries with `type = "elpa" | "melpa" |
-  "archive-contents" | "gitmodules"`) is documented by example in
-  `test/twist.nix`.
-- Lock generation is exposed per-config via `makeApps { lockDirName = ...; }`
-  (`nix run .#lock` / `.#update`).
+- Most `pkgs/**` files follow `nixfmt-rfc-style`; `modules/home-manager.nix` uses an older aligned style.
+  Match the surrounding file rather than reformatting it.
+- The `registries` argument schema (entries with `type = "elpa" | "melpa" | "archive-contents" | "gitmodules"`) is documented by example in `test/twist.nix`.
+- Lock generation is exposed per-config via `makeApps { lockDirName = ...; }` (`nix run .#lock` / `.#update`).
