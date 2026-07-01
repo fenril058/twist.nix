@@ -27,7 +27,7 @@ A mass diff would conflict on every rebase against `master`.
 
 ## Knowledge base (wiki)
 
-Durable, cross-branch notes for this fork live in a separate wiki clone at `~/ghq/github.com/fenril058/twist.nix.wiki` (GitHub Wiki, `ssh://git@github.com/fenril058/twist.nix.wiki.git`).
+Durable, cross-branch notes for this fork live in a separate GitHub Wiki, `ssh://git@github.com/fenril058/twist.nix.wiki.git`, cloned under ghq (find the local path with `ghq list --full-path twist.nix.wiki`).
 It tracks the bugfix backlog, the upstream PR/issue plan, build gotchas, and audit false positives — things that outlive any one topic branch.
 When a finding or a decision is worth keeping beyond the current branch, record it there (and `git -C … commit && push`), not in per-branch files.
 Key pages: `Upstream-PR-Plan.md`, `Bugfix-Cycle-2026-06.md`, `Build-Notes-and-Gotchas.md`, `Fork-and-Branch-Model.md`.
