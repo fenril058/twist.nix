@@ -245,7 +245,7 @@ in
       # have to run `nix flake lock`` in the target directory to update
       # flake.lock.
       lock =
-        (generateLockFiles
+        ((generateLockFiles
           {
             packageInputs =
               excludeLocalPackages (enumerateConcretePackageSet "lock" explicitPackages);
@@ -255,11 +255,13 @@ in
             postCommand = "nix flake lock";
           })
         .asAppWritingToRelativeDir
-        lockDirName;
+          lockDirName) // {
+            meta.description = "Generate lock files for the Emacs Lisp packages.";
+          };
 
       # Generate archive.lock with latest packages from ELPA package archives
       update =
-        (generateLockFiles
+        ((generateLockFiles
           {
             packageInputs =
               excludeLocalPackages (enumerateConcretePackageSet "update" explicitPackages);
@@ -267,6 +269,8 @@ in
             metadataJson = persistMetadata;
           })
         .asAppWritingToRelativeDir
-        lockDirName;
+          lockDirName) // {
+            meta.description = "Generate archive.lock with latest Emacs Lisp packages.";
+          };
     };
   })
